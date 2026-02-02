@@ -11,24 +11,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Repo auschecken
       - name: Repo auschecken
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false  # wichtig, damit Push funktioniert
 
+      # 2️⃣ Node.js installieren
       - name: Node.js installieren
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
+      # 3️⃣ Abhängigkeiten installieren
       - name: Abhängigkeiten installieren
         run: npm install node-fetch@2
 
+      # 4️⃣ Scraper ausführen
       - name: Scraper ausführen
-        run: |
-          node scraper.js
-      - name: Änderungen committen und pushen
+        run: node scraper.js
+
+      # 5️⃣ Änderungen committen
+      - name: Git konfigurieren
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Änderungen committen
+        run: |
           git add rooms.json
-          git commit -m "Automatisch aktualisierte rooms.json" || echo "Keine Änderungen"
+          git commit -m "Automatisch aktualisierte rooms.json" || echo "Keine Änderungen zum committen"
+
+      # 6️⃣ Änderungen pushen
+      - name: Änderungen pushen
+        run: |
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
