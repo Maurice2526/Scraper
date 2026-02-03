@@ -1,40 +1,33 @@
 name: Scrape Room Data
 
-# Läuft jede Stunde und kann manuell gestartet werden
 on:
   schedule:
-    - cron: '0 * * * *' # jede Stunde
-  workflow_dispatch: # manuelles Ausführen möglich
+    - cron: '0 * * * *'   # jede Stunde
+  workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
 
     steps:
-      # Repository auschecken
       - name: Repo auschecken
         uses: actions/checkout@v3
-        with:
-          persist-credentials: false  # wichtig, damit Push mit Token funktioniert
 
-      # Node.js installieren
       - name: Node.js installieren
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      # Abhängigkeiten installieren
       - name: Abhängigkeiten installieren
         run: npm install node-fetch@2
 
-      # Scraper ausführen
       - name: Scraper ausführen
         run: node scraper.js
 
-      # Änderungen pushen
-      - name: Änderungen pushen
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
-          force: true  # optional, erzwingt push
+      - name: Änderungen committen und pushen
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rooms.json
+          git commit -m "Automatisch aktualisierte rooms.json" || echo "Keine Änderungen"
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
