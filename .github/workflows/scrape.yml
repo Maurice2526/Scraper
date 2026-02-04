@@ -15,7 +15,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          # Überschreibe lokale Änderungen, damit keine Konflikte auftreten
           clean: true
 
       # Node.js installieren
@@ -32,7 +31,7 @@ jobs:
       - name: Scraper ausführen
         run: node scraper.js
 
-      # Änderungen committen und pushen (rooms.json wird immer überschrieben)
+      # Änderungen committen und pushen
       - name: Änderungen committen und pushen
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -43,4 +42,5 @@ jobs:
           git add rooms.json
           git commit -m "Automatisch aktualisierte rooms.json" || echo "Keine Änderungen"
 
-          git push --force-with-lease https://x-access-token:$PAT_TOKEN@github.com/${{ github.repository }}.git HEAD:main
+          # Push mit korrekter URL und Branch
+          git push https://x-access-token:$PAT_TOKEN@github.com/${{ github.repository }}.git main --force
