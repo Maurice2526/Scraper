@@ -1,9 +1,8 @@
 name: Scrape Room Data
 
-# Läuft jede Stunde und kann manuell gestartet werden
 on:
   schedule:
-    - cron: '0 * * * *'  # jede Stunde
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -11,9 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Repository auschecken
+      # Repository auschecken und lokale Änderungen ignorieren
       - name: Repo auschecken
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # Überschreibe lokale Änderungen, damit keine Konflikte auftreten
+          clean: true
 
       # Node.js installieren
       - name: Node.js installieren
@@ -37,9 +40,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Alles für Commit vorbereiten
           git add rooms.json
           git commit -m "Automatisch aktualisierte rooms.json" || echo "Keine Änderungen"
 
-          # Force Push auf main, überschreibt alles remote mit diesem Commit
           git push --force-with-lease https://x-access-token:$PAT_TOKEN@github.com/${{ github.repository }}.git HEAD:main
