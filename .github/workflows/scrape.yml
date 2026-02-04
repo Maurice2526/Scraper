@@ -31,9 +31,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Pull vorher mit autostash, damit lokale Änderungen nicht blockieren
-          git pull --rebase --autostash
-
           git add rooms.json
           git commit -m "Automatisch aktualisierte rooms.json" || echo "Keine Änderungen"
-          git push
+
+          # Push erzwingen, weil der Runner die alleinige Quelle ist
+          git push --force-with-lease
