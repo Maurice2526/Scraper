@@ -3,8 +3,9 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 
 /* =========================
-KONFIG
+   KONFIG
 ========================= */
+
 const ROOMS = [
   {
     id: "P4.34",
@@ -14,24 +15,9 @@ const ROOMS = [
 ];
 
 /* =========================
-HILFSFUNKTIONEN
+   SCRAPER
 ========================= */
-function cleanBookingText(text) {
-  if (!text) return [];
-  // Alles nach "Service powered by" entfernen
-  const cleaned = text.split("Service powered by")[0];
-  // Nach doppelten Zeilenumbrüchen splitten, trimmen und leere Strings entfernen
-  const bookings = cleaned
-    .split(/\n{2,}/)
-    .map(s => s.trim())
-    .filter(s => s);
-  // Maximal 7 Buchungen zurückgeben
-  return bookings.slice(0, 7);
-}
 
-/* =========================
-SCRAPER
-========================= */
 async function scrapeTrainexRoom(room) {
   try {
     const { data: html } = await axios.get(room.url, {
@@ -40,35 +26,28 @@ async function scrapeTrainexRoom(room) {
     });
 
     const $ = cheerio.load(html);
-    const bodyText = $("body").text();
-    const rawHtml = $("body").html() || "";
+    const bodyText = $("body").text().toLowerCase();
 
-    // DEBUG: ersten 200 Zeichen ausgeben
-    console.log(`DEBUG ${room.id} bodyText:`, bodyText.substring(0, 200));
-
-    // Status bestimmen
     let status = "unbekannt";
-    if (bodyText.toLowerCase().includes("derzeit frei")) status = "frei";
-    if (bodyText.toLowerCase().includes("derzeit belegt")) status = "belegt";
+    if (bodyText.includes("derzeit frei")) status = "frei";
+    if (bodyText.includes("derzeit belegt")) status = "belegt";
 
     // Buchungen extrahieren
-    const rawBookings = rawHtml
+    const rawHtml = $("body").html() || "";
+    const bookings = rawHtml
       .split("<br>")
       .map(line => cheerio.load(line).text().trim())
-      .filter(line => line && /\d{2}\.\d{2}\.\d{2}/.test(line)); // nur Zeilen mit Datum
-
-    const bookings = cleanBookingText(rawBookings.join("\n"));
+      .filter(line => line && /\d{2}\.\d{2}\.\d{2}/.test(line));
 
     return {
       id: room.id,
       name: room.name,
       status,
       currentBooking: status === "belegt" ? bookings[0] || null : null,
-      upcomingBookings: bookings,
-      updatedAt: new Date().toISOString()
+      upcomingBookings: bookings
     };
   } catch (err) {
-    console.error("❌ Fehler bei", room.id, err.message);
+    console.error(`❌ Fehler bei Raum ${room.id}:`, err.message);
     return {
       id: room.id,
       name: room.name,
@@ -78,13 +57,13 @@ async function scrapeTrainexRoom(room) {
 }
 
 /* =========================
-MAIN
+   MAIN
 ========================= */
+
 async function run() {
   console.log("🔄 Scraping Trainex...");
 
   const results = [];
-
   for (const room of ROOMS) {
     const data = await scrapeTrainexRoom(room);
     results.push(data);
