@@ -23,7 +23,7 @@ jobs:
           node-version: '20'
 
       - name: Abhängigkeiten installieren
-        run: npm install node-fetch@2
+        run: npm install 
 
       - name: Scraper ausführen
         run: node scraper.js
