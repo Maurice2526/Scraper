@@ -19,41 +19,46 @@ const ROOMS = [
 ========================= */
 
 async function scrapeTrainexRoom(room) {
-  try {
-    const { data: html } = await axios.get(room.url, {
-      timeout: 15000,
-      headers: { "User-Agent": "Mozilla/5.0" }
-    });
+  const { data: html } = await axios.get(room.url, {
+    timeout: 20000,
+    headers: {
+      "User-Agent": "Mozilla/5.0"
+    }
+  });
 
-    const $ = cheerio.load(html);
-    const bodyText = $("body").text().toLowerCase();
+  const $ = cheerio.load(html);
 
-    let status = "unbekannt";
-    if (bodyText.includes("derzeit frei")) status = "frei";
-    if (bodyText.includes("derzeit belegt")) status = "belegt";
+  /* ===== STATUS ===== */
 
-    // Buchungen extrahieren
-    const rawHtml = $("body").html() || "";
-    const bookings = rawHtml
-      .split("<br>")
-      .map(line => cheerio.load(line).text().trim())
-      .filter(line => line && /\d{2}\.\d{2}\.\d{2}/.test(line));
+  const statusText = $(
+    "body > table:nth-child(3) > tbody > tr:nth-child(1) > td > font"
+  )
+    .text()
+    .toLowerCase();
 
-    return {
-      id: room.id,
-      name: room.name,
-      status,
-      currentBooking: status === "belegt" ? bookings[0] || null : null,
-      upcomingBookings: bookings
-    };
-  } catch (err) {
-    console.error(`❌ Fehler bei Raum ${room.id}:`, err.message);
-    return {
-      id: room.id,
-      name: room.name,
-      error: true
-    };
-  }
+  let status = "unbekannt";
+  if (statusText.includes("derzeit frei")) status = "frei";
+  if (statusText.includes("derzeit belegt")) status = "belegt";
+
+  /* ===== BOOKINGS ===== */
+
+  const bookings = [];
+
+  $("body > b").each((i, el) => {
+    const text = $(el).text().replace(/\s+/g, " ").trim();
+
+    if (text && /\d{2}\.\d{2}\.\d{2}/.test(text)) {
+      bookings.push(text);
+    }
+  });
+
+  return {
+    id: room.id,
+    name: room.name,
+    status,
+    currentBooking: status === "belegt" ? bookings[0] || null : null,
+    upcomingBookings: bookings
+  };
 }
 
 /* =========================
@@ -61,12 +66,23 @@ async function scrapeTrainexRoom(room) {
 ========================= */
 
 async function run() {
-  console.log("🔄 Scraping Trainex...");
+  console.log("🔄 Starte Scraper...");
 
   const results = [];
+
   for (const room of ROOMS) {
-    const data = await scrapeTrainexRoom(room);
-    results.push(data);
+    try {
+      const data = await scrapeTrainexRoom(room);
+      results.push(data);
+      console.log("✅", room.id, "OK");
+    } catch (err) {
+      console.error("❌ Fehler bei", room.id, err.message);
+      results.push({
+        id: room.id,
+        name: room.name,
+        error: true
+      });
+    }
   }
 
   const output = {
@@ -75,7 +91,7 @@ async function run() {
   };
 
   fs.writeFileSync("rooms.json", JSON.stringify(output, null, 2));
-  console.log("✅ rooms.json geschrieben");
+  console.log("💾 rooms.json geschrieben");
 }
 
 run();
