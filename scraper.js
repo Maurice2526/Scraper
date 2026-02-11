@@ -20,11 +20,35 @@ const ROOMS = [
 
 async function scrapeTrainexRoom(room) {
   const { data: html } = await axios.get(room.url, {
-    timeout: 20000,
-    headers: {
-      "User-Agent": "Mozilla/5.0"
-    }
-  });
+  timeout: 20000,
+  maxRedirects: 5,
+  headers: {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+
+    "Accept":
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+
+    "Accept-Language":
+      "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
+
+    "Accept-Encoding": "gzip, deflate, br",
+
+    "Connection": "keep-alive",
+
+    "Cache-Control": "max-age=0",
+
+    "Upgrade-Insecure-Requests": "1",
+
+    "Referer": "https://www.trainex32.de/",
+
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1"
+  }
+});
+
 
   const $ = cheerio.load(html);
 
@@ -77,6 +101,11 @@ async function run() {
       console.log("✅", room.id, "OK");
     } catch (err) {
       console.error("❌ Fehler bei", room.id, err.message);
+
+      console.log("Status:", err.response?.status);
+      console.log("Headers:", err.response?.headers);
+      console.log("Data:", err.response?.data);
+       
       results.push({
         id: room.id,
         name: room.name,
@@ -95,3 +124,4 @@ async function run() {
 }
 
 run();
+
