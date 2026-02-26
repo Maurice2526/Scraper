@@ -11,7 +11,7 @@
           "person": "Klinik WS23 UaK-08"
         },
         {
-          "date": "2026-02-26",
+          "date": "2026-02-27",
           "start": "13:30",
           "end": "16:15",
           "person": "Herr Töpfer"
@@ -23,7 +23,7 @@
           "person": "Herr Töpfer"
         },
         {
-          "date": "2026-02-26",
+          "date": "2026-02-28",
           "start": "17:30",
           "end": "20:15",
           "person": "Herr Töpfer"
@@ -32,6 +32,7 @@
     }
   ]
 }
+
 
 
 
